@@ -1,0 +1,38 @@
+
+- name: check for ipset
+  tags: ipset
+  command: rpm -q ipset
+  register: ipset_check
+  ignore_errors: True
+
+- name: install ipset
+  yum: name=ipset state=latest update_cache=yes
+  when: ipset_check.stdout.find('is not installed') != -1
+
+- name: template ipset
+  tags: nfs,ipset
+  template: src=ipset.j2 dest=/etc/sysconfig/ipset
+  when: inventory_hostname in groups.nfs_server
+  register: ipset_template
+
+- name: start ipset
+  tags: nfs,ipset
+  service: name=ipset state=restarted enabled=yes
+  when: ansible_distribution_major_version == "6" and ipset_template.changed
+
+- name: copy ipset systemd unit file
+  copy: src=ipset.service dest=/etc/systemd/system/ipset.service mode=0644 owner=root group=root
+  when: ansible_distribution_major_version == "7" and ipset_template.changed
+
+- name: create directory
+  file: path=/usr/libexec/ipset state=directory owner=root group=root
+  when: ansible_distribution_major_version == "7" and ipset_template.changed
+
+- name: copy ipset stop start script
+  copy: src=ipset.start-stop dest=/usr/libexec/ipset/ipset.start-stop mode=0744 owner=root group=root
+  when: ansible_distribution_major_version == "7" and ipset_template.changed
+
+- name: start ipset
+  tags: nfs,ipset
+  service: name=ipset state=restarted enabled=yes
+  when: ansible_distribution_major_version == "7" and ipset_template.changed

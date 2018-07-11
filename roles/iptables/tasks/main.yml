@@ -1,0 +1,38 @@
+
+# fail2ban should be set for any server
+# that has port 22 open to off campus ips
+# it's set automatically for gateways in
+# group vars
+
+- name: set ipset var when fail2ban defined
+  tags: ipset
+  set_fact:
+    ipset: []
+  when: fail2ban is defined
+
+
+# we use ipset to configure firewall rules
+# on NFS file servers
+# shoud be done as well for any other nfs server
+# that we deploy
+
+- name: set ipset var for nfs servers
+  tags: ipset
+  set_fact:
+    ipset: []
+  when: inventory_hostname in groups.nfs_server
+
+- include: ipset.yml
+  when: ipset is defined
+
+- include: firewall.yml 
+
+- name: slack notification
+  slack: token={{ slack_token }} channel=#ansible msg='{{ ansible_env.SUDO_USER }} ran iptables role on {{ inventory_hostname }}' color=good
+         icon_url=http://media.linkonlineworld.com/img/Large/2014/11/9/2014_11_9_10_22_13_286.jpg
+  when: ansible_env.SUDO_USER is defined
+
+- name: slack notification
+  slack: token={{ slack_token }} channel=#ansible msg='{{ ansible_env.USER }} ran iptables role on {{ inventory_hostname }}' color=good
+         icon_url=http://media.linkonlineworld.com/img/Large/2014/11/9/2014_11_9_10_22_13_286.jpg
+  when: ansible_env.USER == 'root' and ansible_env.SUDO_USER is not defined

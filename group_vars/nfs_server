@@ -1,0 +1,4 @@
+
+ip_rules_group: 
+ - '-A INPUT -m set --match-set nfs src -p tcp -m state --state NEW -m multiport --dports {{ nfs_tcp }} -m comment --comment "nfs tcp + rdma" -j ACCEPT'
+ - '-A INPUT -m set --match-set nfs src -p udp -m state --state NEW -m multiport --dports {{ nfs_udp }} -m comment --comment "nfs udp" -j ACCEPT'

@@ -1,2 +1,28 @@
-# ansible_iptables
-manage firewalls with iptables
+
+Manage IPTables Firewalls Using Ansible
+=======================
+
+This role will manage IPTables firewalls on CentOS 6 or 7 servers, as well as Ubuntu, using Jinja templates and group / host vars.
+
+Examples of group_vars and host_vars are included for reference.
+
+Message that firewall was changed will be sent to Slack
+
+Requirements
+------------
+
+You must have Ansible 2.0 installed.
+
+You need a Slack server
+
+Examples
+--------
+
+To set firewall on a host:
+
+ansible-playbook iptables.yml -e hosts=host --sudo -K
+
+
+Notes
+--------
+The role will restart fail2ban gracefully as well as manage NFS and Samba firewall rules within Ipset.

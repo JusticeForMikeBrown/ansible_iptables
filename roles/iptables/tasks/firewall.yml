@@ -1,0 +1,93 @@
+
+ - name: check for iptables
+   command: rpm -q iptables-services
+   register: ipt_check
+   when: ansible_distribution_major_version == "7"
+   ignore_errors: True 
+ 
+ - name: install iptables on el7 hosts
+   yum: name=iptables-services state=latest
+   when: ansible_distribution_major_version == "7" and ipt_check.stdout.find('is not installed') != -1
+   
+ - name: disable firewalld on el7 hosts
+   shell: systemctl mask firewalld.service && systemctl enable iptables.service && systemctl enable ip6tables.service
+   when: ansible_distribution_major_version == "7"
+   notify: 
+   - iptables
+   - ip6tables
+ 
+ - name: build the iptables template file non-docker
+   template: dest=/etc/sysconfig/iptables src=iptables.j2 owner=root group=root mode=600 backup=yes
+   notify: iptables
+   when: "ansible_os_family == 'RedHat' and docker is not defined"
+   register: copy_status
+
+ - name: build the iptables template file for docker hosts
+   template: dest=/etc/sysconfig/iptables src=iptables_docker.j2 owner=root group=root mode=600 backup=yes
+   notify: iptables
+   when: "ansible_os_family == 'RedHat' and docker is defined"
+   register: copy_status
+ 
+   # - name: diff new and backed up file
+   #   command: diff /etc/sysconfig/iptables {{ copy_status.backup_file }}
+   #   when: copy_status | changed
+   #   register: diff_output
+   #   ignore_errors: true
+   #   no_log: true
+   #
+   # - name: display diff
+   #   debug: var=diff_output.stdout_lines
+   #   when: copy_status | changed
+ 
+ - name: build the ip6tables template file
+   template: dest=/etc/sysconfig/ip6tables src=ip6tables.j2 owner=root group=root mode=600 backup=yes
+   notify: ip6tables
+   when: "ansible_os_family == 'RedHat'"
+   register: copy_status6
+
+   # - name: diff new and backed up ipv6 files
+   #   command: diff /etc/sysconfig/ip6tables {{ copy_status6.backup_file }}
+   #   when: copy_status6 | changed
+   #   register: diff6_output
+   #   ignore_errors: true
+   #   no_log: true
+   #
+   # - name: display ipv6 diff
+   #   debug: var=diff6_output.stdout_lines
+   #   when: copy_status6 | changed
+
+   # - name: ubuntu iptables
+   #   template: dest=/etc/iptables.rules src=iptables.j2 owner=root group=root mode=600 backup=yes
+   #   when:  ansible_os_family == 'Debian'
+   # 
+   # - name: ubuntu iptables
+   #   shell:  iptables-restore < /etc/iptables.rules
+   #   when:  ansible_os_family == 'Debian'
+   # 
+   # - name: ubuntu iptables
+   #   copy: src=interfaces dest=/etc/network/interfaces
+   #   when:  ansible_os_family == 'Debian'
+
+ - name: service ipset restart
+   service: name=ipset state=restarted enabled=true
+   when: ipset_template.changed
+   notify: iptables
+
+ - meta: flush_handlers
+
+ - name: check if fail2ban exists
+   stat: path=/usr/bin/fail2ban-server
+   register: f2b
+
+ - name: display var
+   debug: var=f2b
+
+ - name: restart fail2ban
+   shell: systemctl restart fail2ban.service
+   when: (f2b.stat.exists) and (ansible_distribution_major_version == '7')
+   ignore_errors: True
+
+ - name: restart fail2ban
+   shell: service fail2ban restart
+   when: (f2b.stat.exists) and (ansible_distribution_major_version == '6')
+   ignore_errors: True

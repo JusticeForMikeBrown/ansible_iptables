@@ -1,0 +1,7 @@
+fail2ban: []
+gpfs: []
+
+ip_rules_group:
+ - '-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -m comment --comment "all access to port 22 from the world" -j ACCEPT'
+ - '-A INPUT -p tcp -m state --state NEW -m tcp --dport 5201 -m comment --comment "all access to port 5201 [iperf3] from the world" -j ACCEPT'
+ - '-A INPUT -p udp -m state --state NEW -m multiport --dports 33001:33010 -m comment --comment "all access to aspera from the world" -j ACCEPT'

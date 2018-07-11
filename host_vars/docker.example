@@ -1,0 +1,4 @@
+
+ip_rules:
+- '-A DOCKER-USER -m state --state RELATED,ESTABLISHED -j ACCEPT'
+- '-A DOCKER-USER -i em1 ! -s {{ apache_server }}  -m comment --comment "drop all traffic for docker thats not from external apache server" -j DROP'

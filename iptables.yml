@@ -1,0 +1,5 @@
+---
+- hosts: "{{ hosts }}"
+  roles: 
+    - { role:  iptables, when: inventory_hostname not in groups.cluster }
+  gather_facts: True

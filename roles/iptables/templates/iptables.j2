@@ -1,0 +1,55 @@
+#Ansible Build From Template 
+
+*filter
+:INPUT DROP [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+
+# Rules For All Servers Begin
+{% for item in ip_rules_all |default()%}
+{{ item }}
+{% endfor %}
+# Rules For All Servers End
+
+# Group Vars Begin 
+{% for item in ip_rules_group |default()%}
+{{ item }}
+{% endfor %}
+# Group Vars End
+
+# Secondary Group Vars Begin 
+{% for item in ip_rules_group_secondary |default()%}
+{{ item }}
+{% endfor %}
+# Secondary Group Vars End
+
+{% if inventory_hostname in groups.labservers %}
+# Snowflake Lab SSH Rules
+{% for host in groups.labservers if 'string' not in host %}
+-A INPUT -s {{ lookup('dig', host, '@dns_server')}} -p tcp -m state --state NEW -m tcp --dport 22 -m comment --comment "ssh from {{ host }}" -j ACCEPT
+{% endfor %}
+{% endif %}
+
+# Host Vars Begin 
+{% for item in ip_rules |default()%}
+{{ item }}
+{% endfor %}
+# Host Vars End
+
+{% if gpfs is defined %}
+-A INPUT -s {{ gpfs_a_subnet }} -p tcp -m state --state NEW -m multiport --sports 1191,30000:30100 -m comment --comment "gpfs class a mgmt subnet" -j ACCEPT
+-A INPUT -s {{ gpfs_a_subnet }} -p tcp -m state --state NEW -m multiport --dports 1191,30000:30100 -m comment --comment "gpfs class a mgmt subnet" -j ACCEPT
+-A INPUT -s {{ gpfs_c_subnet }} -p tcp -m state --state NEW -m multiport --dports 1191,30000:30100 -m comment --comment "gpfs class c mgmt subnet" -j ACCEPT
+-A INPUT -s {{ gpfs_c_subnet }} -p tcp -m state --state NEW -m multiport --sports 1191,30000:30100 -m comment --comment "gpfs class c mgmt subnet" -j ACCEPT
+{% endif %}
+
+-N LOGGING
+-A INPUT -j LOGGING
+-A LOGGING -p tcp -m tcp -m state --state NEW -m multiport --dports 1:65535 -m pkttype --pkt-type unicast -j LOG --log-prefix "IPTables-Unicast-TCP-Logged:" --log-level 4
+-A LOGGING -p udp -m udp -m state --state NEW -m multiport --dports 1:65535 -m pkttype --pkt-type unicast -j LOG --log-prefix "IPTables-Unicast-UDP-Logged:" --log-level 4
+-A LOGGING -j DROP
+
+COMMIT

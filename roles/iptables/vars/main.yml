@@ -1,0 +1,18 @@
+
+# nfs tcp ports used for nfs servers
+nfs_tcp: '111,662,875,892,2049,20048,20049,32803'
+
+# nfs udp ports used for nfs servers
+nfs_udp: '111,662,875,892,2049,20049,32769'
+
+# token used to send slack message upon role completion
+slack_token: 'slack_token'
+
+# dns server used to perform lookups, if needed, see templates/iptables.j2
+dns_server: 'dns_server'
+
+# used for gpfs servers - see templates/iptables.j2
+gpfs_a_subnet: '10.0.0.0/16'
+
+# used for gpfs servers - see templates/iptables.j2
+gpfs_c_subnet: '172.16.0.0/16'

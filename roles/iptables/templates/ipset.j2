@@ -1,0 +1,10 @@
+{% if 'nfserver1' in inventory_hostname or 'nfserver2' in inventory_hostname %}
+create nfs hash:net family inet hashsize 1024 maxelem 65536
+add nfs {{ gpfs_a_subnet }}
+add nfs {{ gpfs_c_subnet }}
+{% endif %}
+{% if inventory_hostname == 'samba_server'  %}
+create samba hash:net family inet hashsize 1024 maxelem 65536
+add samba {{ gpfs_a_subnet }}
+add samba {{ gpfs_c_subnet }}
+{% endif %}
