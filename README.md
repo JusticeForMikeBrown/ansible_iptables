@@ -17,6 +17,8 @@ You need a Slack server
 
 You must be cool with **not using firewalld**
 
+Ideally CentOS 6 or 7
+
 Examples
 --------
 
@@ -28,8 +30,8 @@ ansible-playbook iptables.yml -e hosts=host --sudo -K
 
 Notes
 --------
-The role will restart fail2ban gracefully as well as manage NFS and Samba firewall rules within Ipset.
+The role will restart fail2ban gracefully as well as manage NFS and Samba firewall rules within ipset.
 
-All incoming and outgoing traffic on IPv6 networks will be dropped by default.
+All incoming and outgoing traffic on IPv6 networks will be ***dropped by default***.
 
-All unicast TCP and UDP packets will be looged in syslog
+All unicast TCP and UDP packets will be ***logged in syslog***.
